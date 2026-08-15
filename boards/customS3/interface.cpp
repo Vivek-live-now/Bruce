@@ -16,14 +16,15 @@ XPowersPPM PPM;
 
 void _setup_gpio() {
 
-    pinMode(UP_BTN, INPUT); // Sets the power btn as an INPUT
-    pinMode(SEL_BTN, INPUT);
-    pinMode(DW_BTN, INPUT);
-    pinMode(R_BTN, INPUT);
-    pinMode(L_BTN, INPUT);
+    pinMode(CC1101_SS_PIN, OUTPUT);
+    pinMode(NRF24_SS_PIN, OUTPUT);
 
-    bruceConfigPins.rfModule = M5_RF_MODULE;
-    bruceConfigPins.irRx = RXLED;
+    digitalWrite(CC1101_SS_PIN, HIGH);
+    digitalWrite(NRF24_SS_PIN, HIGH);
+    // Starts SPI instance for CC1101 and NRF24 with CS pins blocking communication at start
+
+    bruceConfigPins.rfModule = CC1101_SPI_MODULE;
+    bruceConfigPins.irRx = -1; // RXLED was repurposed
     setSysI2CBus(&Wire); // PMU lives on the default Wire object
     Wire.setPins(SYS_I2C_SDA, SYS_I2C_SCL);
     // Wire.begin();
@@ -86,35 +87,7 @@ void _setBrightness(uint8_t brightval) {
 ** Handles the variables PrevPress, NextPress, SelPress, AnyKeyPress and EscPress
 **********************************************************************/
 void InputHandler(void) {
-    static unsigned long tm = 0;
-    if (millis() - tm < 200 && !LongPress) return;
-    bool _u = digitalRead(UP_BTN);
-    bool _d = digitalRead(DW_BTN);
-    bool _l = digitalRead(L_BTN);
-    bool _r = digitalRead(R_BTN);
-    bool _s = digitalRead(SEL_BTN);
-
-    if (!_s || !_u || !_d || !_r || !_l) {
-        tm = millis();
-        if (!wakeUpScreen()) AnyKeyPress = true;
-        else return;
-    }
-    if (!_l) { PrevPress = true; }
-    if (!_r) { NextPress = true; }
-    if (!_u) {
-        UpPress = true;
-        PrevPagePress = true;
-    }
-    if (!_d) {
-        DownPress = true;
-        NextPagePress = true;
-    }
-    if (!_s) { SelPress = true; }
-    if (!_l && !_r) {
-        EscPress = true;
-        NextPress = false;
-        PrevPress = false;
-    }
+    // Board relies on Touch. No physical buttons.
 }
 
 /*********************************************************************
@@ -123,7 +96,6 @@ void InputHandler(void) {
 ** Turns off the device (or try to)
 **********************************************************************/
 void powerOff() {
-    esp_sleep_enable_ext0_wakeup((gpio_num_t)SEL_BTN, BTN_ACT);
     esp_deep_sleep_start();
 }
 
@@ -133,37 +105,5 @@ void powerOff() {
 ** Btn logic to turn off the device (name is odd btw)
 **********************************************************************/
 void checkReboot() {
-    int countDown = 0;
-    /* Long press power off */
-    if (digitalRead(L_BTN) == BTN_ACT && digitalRead(R_BTN) == BTN_ACT) {
-        uint32_t time_count = millis();
-        while (digitalRead(L_BTN) == BTN_ACT && digitalRead(R_BTN) == BTN_ACT) {
-            // Display poweroff bar only if holding button
-            if (millis() - time_count > 500) {
-                if (countDown == 0) {
-                    int textWidth = tft.textWidth("PWR OFF IN 3/3", 1);
-                    tft.fillRect(tftWidth / 2 - textWidth / 2, 7, textWidth, 18, bruceConfig.bgColor);
-                }
-                tft.setTextSize(1);
-                tft.setTextColor(bruceConfig.priColor, bruceConfig.bgColor);
-                countDown = (millis() - time_count) / 1000 + 1;
-                if (countDown < 4)
-                    tft.drawCentreString("PWR OFF IN " + String(countDown) + "/3", tftWidth / 2, 12, 1);
-                else {
-                    tft.fillScreen(bruceConfig.bgColor);
-                    while (digitalRead(L_BTN) == BTN_ACT || digitalRead(R_BTN) == BTN_ACT);
-                    delay(200);
-                    powerOff();
-                }
-                delay(10);
-            }
-        }
-
-        // Clear text after releasing the button
-        delay(30);
-        if (millis() - time_count > 500) {
-            tft.fillRect(60, 12, tftWidth - 60, tft.fontHeight(1), bruceConfig.bgColor);
-            drawStatusBar();
-        }
-    }
+    // No physical buttons to trigger reboot
 }

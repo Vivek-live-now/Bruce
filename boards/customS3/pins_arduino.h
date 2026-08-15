@@ -24,21 +24,24 @@ static const uint8_t SCK = 18;
 #define GPS_SERIAL_RX SERIAL_RX
 #define USB_as_HID 1
 
-#define BTN_ALIAS "\"OK\""
-#define HAS_5_BUTTONS
-#define SEL_BTN 0
-#define UP_BTN 41
-#define DW_BTN 40
-#define R_BTN 38
-#define L_BTN 39
-#define BTN_ACT LOW
-
-#define RXLED 4
 #define TXLED 5
 #define LED_ON HIGH
 #define LED_OFF LOW
 
-// CC1101 and NRF24 removed
+#define USE_CC1101_VIA_SPI
+#define CC1101_GDO0_PIN 9
+#define CC1101_GDO2_PIN 14
+#define CC1101_SS_PIN 38
+#define CC1101_MOSI_PIN 11
+#define CC1101_SCK_PIN 12
+#define CC1101_MISO_PIN 13
+
+#define USE_NRF24_VIA_SPI
+#define NRF24_CE_PIN 4
+#define NRF24_SS_PIN 21
+#define NRF24_MOSI_PIN 11
+#define NRF24_SCK_PIN 12
+#define NRF24_MISO_PIN 13
 
 #define FP 1
 #define FM 2
@@ -106,9 +109,9 @@ static const uint8_t SCK = 18;
 // Removed due to conflict / not requested
 #endif /* Pins_Arduino_h */
 #define SPI_SS_PIN -1
-#define SPI_MOSI_PIN -1
-#define SPI_MISO_PIN -1
-#define SPI_SCK_PIN -1
+#define SPI_MOSI_PIN 11
+#define SPI_MISO_PIN 13
+#define SPI_SCK_PIN 12
 #define PIN_WS -1
 #define PIN_CLK -1
 #define PIN_DATA -1
