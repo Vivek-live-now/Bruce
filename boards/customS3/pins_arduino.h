@@ -38,20 +38,7 @@ static const uint8_t SCK = 18;
 #define LED_ON HIGH
 #define LED_OFF LOW
 
-#define USE_CC1101_VIA_SPI
-#define CC1101_GDO0_PIN 9
-#define CC1101_GDO2_PIN 10
-#define CC1101_SS_PIN 46
-#define CC1101_MOSI_PIN SPI_MOSI_PIN
-#define CC1101_SCK_PIN SPI_SCK_PIN
-#define CC1101_MISO_PIN SPI_MISO_PIN
-
-#define USE_NRF24_VIA_SPI
-#define NRF24_CE_PIN 21
-#define NRF24_SS_PIN 14
-#define NRF24_MOSI_PIN SPI_MOSI_PIN
-#define NRF24_SCK_PIN SPI_SCK_PIN
-#define NRF24_MISO_PIN SPI_MISO_PIN
+// CC1101 and NRF24 removed
 
 #define FP 1
 #define FM 2
@@ -85,20 +72,17 @@ static const uint8_t SCK = 18;
 #define SPI_READ_FREQUENCY 20000000
 #define SPI_TOUCH_FREQUENCY 2500000
 
-#define SDCARD_CS 3
-#define SDCARD_SCK 18
-#define SDCARD_MISO 8
-#define SDCARD_MOSI 17
+#define SDCARD_CS 10
+#define SDCARD_SCK 12
+#define SDCARD_MISO 13
+#define SDCARD_MOSI 11
 
 #define GROVE_SDA 47
 #define GROVE_SCL 48
 #define SYS_I2C_SDA 47
 #define SYS_I2C_SCL 48
 
-#define SPI_SCK_PIN 13
-#define SPI_MOSI_PIN 12
-#define SPI_MISO_PIN 11
-#define SPI_SS_PIN 43
+// Secondary SPI bus removed/reassigned
 
 // RGB LED
 
@@ -116,17 +100,15 @@ static const uint8_t SCK = 18;
 // USE BOOST ENABLE PMIC 5V OUTPUT
 #define USE_BOOST
 
-// Mic#
-#define PIN_CLK 1
-#define PIN_DATA 10
-#define PIN_WS 2
+// Microphone removed
 
 // IO EXPANDER
-#define USE_IO_EXPANDER
-#define IO_EXPANDER_AW9523
-#define IO_EXP_GPS 13
-#define IO_EXP_MIC 4
-#define IO_EXP_VIBRO 2
-#define IO_EXP_CC_RX 7
-#define IO_EXP_CC_TX 12
+// Removed due to conflict / not requested
 #endif /* Pins_Arduino_h */
+#define SPI_SS_PIN -1
+#define SPI_MOSI_PIN -1
+#define SPI_MISO_PIN -1
+#define SPI_SCK_PIN -1
+#define PIN_WS -1
+#define PIN_CLK -1
+#define PIN_DATA -1

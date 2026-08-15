@@ -22,14 +22,7 @@ void _setup_gpio() {
     pinMode(R_BTN, INPUT);
     pinMode(L_BTN, INPUT);
 
-    pinMode(CC1101_SS_PIN, OUTPUT);
-    pinMode(NRF24_SS_PIN, OUTPUT);
-
-    digitalWrite(CC1101_SS_PIN, HIGH);
-    digitalWrite(NRF24_SS_PIN, HIGH);
-    // Starts SPI instance for CC1101 and NRF24 with CS pins blocking communication at start
-
-    bruceConfigPins.rfModule = CC1101_SPI_MODULE;
+    bruceConfigPins.rfModule = M5_RF_MODULE;
     bruceConfigPins.irRx = RXLED;
     setSysI2CBus(&Wire); // PMU lives on the default Wire object
     Wire.setPins(SYS_I2C_SDA, SYS_I2C_SCL);
