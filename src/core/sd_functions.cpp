@@ -71,7 +71,23 @@ bool setupSdCard(uint8_t maxFiles) {
 #else
     // Not using InputHandler (SdCard on default &SPI bus)
     if (task) {
-        if (!SD.begin((int8_t)bruceConfigPins.SDCARD_bus.cs, SPI, 4000000UL, "/sd", maxFiles)) result = false;
+        SPIClass *bus = acquireSPIBus(
+            bruceConfigPins.SDCARD_bus.sck, bruceConfigPins.SDCARD_bus.miso, bruceConfigPins.SDCARD_bus.mosi
+        );
+        if (bus != nullptr && bus != &sdcardSPI) {
+            if (!SD.begin((int8_t)bruceConfigPins.SDCARD_bus.cs, *bus, 4000000UL, "/sd", maxFiles)) result = false;
+        } else {
+            if (!sdcardSPI.begin(
+                    (int8_t)bruceConfigPins.SDCARD_bus.sck,
+                    (int8_t)bruceConfigPins.SDCARD_bus.miso,
+                    (int8_t)bruceConfigPins.SDCARD_bus.mosi,
+                    (int8_t)bruceConfigPins.SDCARD_bus.cs
+                )) {
+                Serial.println("Failed starting SPI Bus");
+            } // start SPI communications
+            delay(20);
+            if (!SD.begin((int8_t)bruceConfigPins.SDCARD_bus.cs, sdcardSPI, 4000000UL, "/sd", maxFiles)) result = false;
+        }
         // Serial.println("Task not activated");
     } else {
         // acquireSPIBus() never begin()s the display's bus (it's already running), so a non-null,
