@@ -359,6 +359,8 @@ void boot_screen_anim() {
             delay(10);
             return;
         }
+
+        vTaskDelay(pdMS_TO_TICKS(10)); // Feed the WDT and allow other tasks to run
     }
 
     // Clear splashscreen
