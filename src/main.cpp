@@ -192,7 +192,10 @@ void begin_storage() {
 #if SOC_CPU_CORES_NUM > 1
         disableCore1WDT();
 #endif
+        disableLoopWDT();
+        Serial.println("Formatting LittleFS... (This may take a while)");
         LittleFS.format();
+        enableLoopWDT();
         enableCore0WDT();
 #if SOC_CPU_CORES_NUM > 1
         enableCore1WDT();
