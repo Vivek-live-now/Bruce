@@ -188,7 +188,15 @@ volatile int tftHeight = VECTOR_DISPLAY_DEFAULT_WIDTH;
  *********************************************************************/
 void begin_storage() {
     if (!setupLittleFS()) {
+        disableCore0WDT();
+#if SOC_CPU_CORES_NUM > 1
+        disableCore1WDT();
+#endif
         LittleFS.format();
+        enableCore0WDT();
+#if SOC_CPU_CORES_NUM > 1
+        enableCore1WDT();
+#endif
         setupLittleFS();
     }
     RAM_LOG("after LittleFS");
