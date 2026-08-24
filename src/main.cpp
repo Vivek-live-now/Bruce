@@ -187,27 +187,18 @@ volatile int tftHeight = VECTOR_DISPLAY_DEFAULT_WIDTH;
  **  Config LittleFS and SD storage
  *********************************************************************/
 void begin_storage() {
-    disableCore0WDT();
-#if SOC_CPU_CORES_NUM > 1
-    disableCore1WDT();
-#endif
-    disableLoopWDT();
-
-    Serial.println("Mounting LittleFS...");
+    Serial.println("DIAG: begin_storage() entered");
+    RAM_LOG("before setupLittleFS");
     if (!setupLittleFS()) {
-        Serial.println("Formatting LittleFS... (This may take a while on 16MB Flash)");
+        Serial.println("DIAG: setupLittleFS() failed, calling LittleFS.format()");
         LittleFS.format();
+        Serial.println("DIAG: LittleFS.format() finished, calling setupLittleFS() again");
         setupLittleFS();
     }
-
-    enableLoopWDT();
-    enableCore0WDT();
-#if SOC_CPU_CORES_NUM > 1
-    enableCore1WDT();
-#endif
-
     RAM_LOG("after LittleFS");
+    Serial.println("DIAG: before setupSdCard()");
     bool checkFS = setupSdCard();
+    Serial.println("DIAG: after setupSdCard()");
     bruceConfig.fromFile(checkFS);
     bruceConfigPins.fromFile(checkFS);
 }
@@ -506,7 +497,10 @@ void setup() {
 #else
     tft.begin();
 #endif
+    Serial.println("DIAG: before _pre_storage_gpio");
     _pre_storage_gpio();
+    Serial.println("DIAG: after _pre_storage_gpio");
+    Serial.println("DIAG: before begin_storage");
     begin_storage();
     RAM_LOG("after-storage"); // bruceConfig/bruceConfigPins loaded from FS
     begin_tft();
