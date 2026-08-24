@@ -187,21 +187,25 @@ volatile int tftHeight = VECTOR_DISPLAY_DEFAULT_WIDTH;
  **  Config LittleFS and SD storage
  *********************************************************************/
 void begin_storage() {
+    disableCore0WDT();
+#if SOC_CPU_CORES_NUM > 1
+    disableCore1WDT();
+#endif
+    disableLoopWDT();
+
+    Serial.println("Mounting LittleFS...");
     if (!setupLittleFS()) {
-        disableCore0WDT();
-#if SOC_CPU_CORES_NUM > 1
-        disableCore1WDT();
-#endif
-        disableLoopWDT();
-        Serial.println("Formatting LittleFS... (This may take a while)");
+        Serial.println("Formatting LittleFS... (This may take a while on 16MB Flash)");
         LittleFS.format();
-        enableLoopWDT();
-        enableCore0WDT();
-#if SOC_CPU_CORES_NUM > 1
-        enableCore1WDT();
-#endif
         setupLittleFS();
     }
+
+    enableLoopWDT();
+    enableCore0WDT();
+#if SOC_CPU_CORES_NUM > 1
+    enableCore1WDT();
+#endif
+
     RAM_LOG("after LittleFS");
     bool checkFS = setupSdCard();
     bruceConfig.fromFile(checkFS);
