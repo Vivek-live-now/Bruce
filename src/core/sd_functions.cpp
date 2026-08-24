@@ -32,10 +32,7 @@ std::vector<FileList> fileList;
 ***************************************************************************************/
 bool setupLittleFS(uint8_t maxFiles) {
     if (maxFiles < 1) { maxFiles = 1; }
-    Serial.println("DIAG: before LittleFS.begin()");
-    bool ret = LittleFS.begin(false, "/littlefs", maxFiles);
-    Serial.println("DIAG: after LittleFS.begin()");
-    return ret;
+    return LittleFS.begin(false, "/littlefs", maxFiles);
 }
 
 /***************************************************************************************

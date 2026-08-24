@@ -182,23 +182,40 @@ volatile int tftHeight = VECTOR_DISPLAY_DEFAULT_WIDTH;
 #include "modules/rf/rf_utils.h"                 // for initCC1101once
 #include <Wire.h>
 
+#include <esp_task_wdt.h>
+
 /*********************************************************************
  **  Function: begin_storage
  **  Config LittleFS and SD storage
  *********************************************************************/
 void begin_storage() {
-    Serial.println("DIAG: begin_storage() entered");
     RAM_LOG("before setupLittleFS");
+
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    esp_task_wdt_config_t twdt_config = {
+        .timeout_ms = 15000,
+        .idle_core_mask = (1 << SOC_CPU_CORES_NUM) - 1, // Subscribe all cores
+        .trigger_panic = true,
+    };
+    esp_task_wdt_reconfigure(&twdt_config);
+#else
+    esp_task_wdt_init(15, true);
+#endif
+
     if (!setupLittleFS()) {
-        Serial.println("DIAG: setupLittleFS() failed, calling LittleFS.format()");
         LittleFS.format();
-        Serial.println("DIAG: LittleFS.format() finished, calling setupLittleFS() again");
         setupLittleFS();
     }
+
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    twdt_config.timeout_ms = 5000;
+    esp_task_wdt_reconfigure(&twdt_config);
+#else
+    esp_task_wdt_init(5, true);
+#endif
+
     RAM_LOG("after LittleFS");
-    Serial.println("DIAG: before setupSdCard()");
     bool checkFS = setupSdCard();
-    Serial.println("DIAG: after setupSdCard()");
     bruceConfig.fromFile(checkFS);
     bruceConfigPins.fromFile(checkFS);
 }
@@ -497,10 +514,7 @@ void setup() {
 #else
     tft.begin();
 #endif
-    Serial.println("DIAG: before _pre_storage_gpio");
     _pre_storage_gpio();
-    Serial.println("DIAG: after _pre_storage_gpio");
-    Serial.println("DIAG: before begin_storage");
     begin_storage();
     RAM_LOG("after-storage"); // bruceConfig/bruceConfigPins loaded from FS
     begin_tft();
