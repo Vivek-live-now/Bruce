@@ -182,15 +182,38 @@ volatile int tftHeight = VECTOR_DISPLAY_DEFAULT_WIDTH;
 #include "modules/rf/rf_utils.h"                 // for initCC1101once
 #include <Wire.h>
 
+#include <esp_task_wdt.h>
+
 /*********************************************************************
  **  Function: begin_storage
  **  Config LittleFS and SD storage
  *********************************************************************/
 void begin_storage() {
+    RAM_LOG("before setupLittleFS");
+
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    esp_task_wdt_config_t twdt_config = {
+        .timeout_ms = 15000,
+        .idle_core_mask = (1 << SOC_CPU_CORES_NUM) - 1, // Subscribe all cores
+        .trigger_panic = true,
+    };
+    esp_task_wdt_reconfigure(&twdt_config);
+#else
+    esp_task_wdt_init(15, true);
+#endif
+
     if (!setupLittleFS()) {
         LittleFS.format();
         setupLittleFS();
     }
+
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    twdt_config.timeout_ms = 5000;
+    esp_task_wdt_reconfigure(&twdt_config);
+#else
+    esp_task_wdt_init(5, true);
+#endif
+
     RAM_LOG("after LittleFS");
     bool checkFS = setupSdCard();
     bruceConfig.fromFile(checkFS);
@@ -359,6 +382,8 @@ void boot_screen_anim() {
             delay(10);
             return;
         }
+
+        vTaskDelay(pdMS_TO_TICKS(10)); // Feed the WDT and allow other tasks to run
     }
 
     // Clear splashscreen
