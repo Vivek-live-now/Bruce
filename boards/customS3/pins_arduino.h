@@ -107,13 +107,11 @@ static const uint8_t SCK = 18;
 
 // IO EXPANDER
 // Removed due to conflict / not requested
-
+#endif /* Pins_Arduino_h */
 #define SPI_SS_PIN -1
-#define SPI_MOSI_PIN -1
-#define SPI_MISO_PIN -1
-#define SPI_SCK_PIN -1
+#define SPI_MOSI_PIN 11
+#define SPI_MISO_PIN 13
+#define SPI_SCK_PIN 12
 #define PIN_WS -1
 #define PIN_CLK -1
 #define PIN_DATA -1
-
-#endif /* Pins_Arduino_h */

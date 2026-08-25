@@ -1,6 +1,5 @@
 #include "core/bus_HAL.h"
 #include "core/powerSave.h"
-#include "core/utils.h"
 
 /***************************************************************************************
 ** Function name: _setup_gpio()
@@ -16,11 +15,6 @@ XPowersPPM PPM;
 #endif
 
 void _setup_gpio() {
-
-    pinMode(TFT_CS, OUTPUT);
-    digitalWrite(TFT_CS, HIGH);
-    pinMode(TFT_BL, OUTPUT);
-    digitalWrite(TFT_BL, HIGH);
 
     pinMode(CC1101_SS_PIN, OUTPUT);
     pinMode(NRF24_SS_PIN, OUTPUT);
@@ -88,92 +82,12 @@ void _setBrightness(uint8_t brightval) {
     }
 }
 
-/***************************************************************************************
-** Function name: _post_setup_gpio()
-** Location: main.cpp
-** Description:   second stage gpio setup to make a few functions work
-***************************************************************************************/
-void _post_setup_gpio() {
-#ifdef HAS_TOUCH
-    pinMode(TOUCH_CS, OUTPUT);
-    uint16_t calData[5];
-    File caldata = LittleFS.open("/calData", "r");
-
-    if (!caldata) {
-        tft.setRotation(ROTATION);
-        tft.calibrateTouch(calData, TFT_WHITE, TFT_BLACK, 10);
-
-        caldata = LittleFS.open("/calData", "w");
-        if (caldata) {
-            caldata.printf(
-                "%d\n%d\n%d\n%d\n%d\n", calData[0], calData[1], calData[2], calData[3], calData[4]
-            );
-            caldata.close();
-        }
-    } else {
-        Serial.print("\ntft Calibration data: ");
-        for (int i = 0; i < 5; i++) {
-            String line = caldata.readStringUntil('\n');
-            calData[i] = line.toInt();
-            Serial.printf("%d, ", calData[i]);
-        }
-        Serial.println();
-        caldata.close();
-    }
-    tft.setTouch(calData);
-#endif
-}
-
 /*********************************************************************
 ** Function: InputHandler
 ** Handles the variables PrevPress, NextPress, SelPress, AnyKeyPress and EscPress
 **********************************************************************/
 void InputHandler(void) {
-    static unsigned long tm = 0;
-    if (millis() - tm < 200 && !LongPress) return;
-#ifdef HAS_TOUCH
-    TouchPoint t;
-    checkPowerSaveTime();
-    bool _IH_touched = tft.getTouch(&t.x, &t.y);
-    if (_IH_touched) {
-        NextPress = false;
-        PrevPress = false;
-        UpPress = false;
-        DownPress = false;
-        SelPress = false;
-        EscPress = false;
-        AnyKeyPress = false;
-        NextPagePress = false;
-        PrevPagePress = false;
-        touchPoint.pressed = false;
-        _IH_touched = false;
-
-        if (bruceConfigPins.rotation == 3) {
-            t.y = (tftHeight + 20) - t.y;
-            t.x = tftWidth - t.x;
-        }
-        if (bruceConfigPins.rotation == 0) {
-            uint16_t tmp = t.x;
-            t.x = map((tftHeight + 20) - t.y, 0, 320, 0, 240);
-            t.y = map(tmp, 0, 240, 0, 320);
-        }
-        if (bruceConfigPins.rotation == 2) {
-            uint16_t tmp = t.x;
-            t.x = map(t.y, 0, 320, 0, 240);
-            t.y = map(tftWidth - tmp, 0, 240, 0, 320);
-        }
-
-        if (!wakeUpScreen()) AnyKeyPress = true;
-        else return;
-
-        // Touch point global variable
-        touchPoint.x = t.x;
-        touchPoint.y = t.y;
-        touchPoint.pressed = true;
-        touchHeatMap(touchPoint);
-        tm = millis();
-    }
-#endif
+    // Board relies on Touch. No physical buttons.
 }
 
 /*********************************************************************
