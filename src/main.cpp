@@ -191,33 +191,80 @@ volatile int tftHeight = VECTOR_DISPLAY_DEFAULT_WIDTH;
 void begin_storage() {
     RAM_LOG("before setupLittleFS");
 
+    // Temporarily deinit Task WDT during LittleFS operation to isolate TWDT
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    esp_task_wdt_deinit();
+#endif
+
+    RAM_LOG("before LittleFS.begin");
+    Serial.println("[FS_DIAG] Starting setupLittleFS()...");
+    Serial.flush();
+
+    uint32_t t_begin_start = millis();
+    bool begin_ok = setupLittleFS();
+    uint32_t t_begin_dur = millis() - t_begin_start;
+
+    Serial.printf("[FS_DIAG] setupLittleFS() completed in %lu ms, result=%s\n", t_begin_dur, begin_ok ? "OK" : "FAIL");
+    Serial.flush();
+
+    if (begin_ok) {
+        RAM_LOG("after LittleFS.begin-ok");
+    } else {
+        RAM_LOG("after LittleFS.begin-fail");
+        RAM_LOG("before LittleFS.format");
+        Serial.println("[FS_DIAG] LittleFS mount failed. Starting LittleFS.format()...");
+        Serial.flush();
+
+        uint32_t t_fmt_start = millis();
+        bool fmt_ok = LittleFS.format();
+        uint32_t t_fmt_dur = millis() - t_fmt_start;
+
+        Serial.printf("[FS_DIAG] LittleFS.format() completed in %lu ms, result=%s\n", t_fmt_dur, fmt_ok ? "OK" : "FAIL");
+        Serial.flush();
+
+        if (fmt_ok) {
+            RAM_LOG("after LittleFS.format-ok");
+        } else {
+            RAM_LOG("after LittleFS.format-fail");
+        }
+
+        RAM_LOG("before 2nd setupLittleFS");
+        uint32_t t_retry_start = millis();
+        bool retry_ok = setupLittleFS();
+        uint32_t t_retry_dur = millis() - t_retry_start;
+
+        Serial.printf("[FS_DIAG] 2nd setupLittleFS() completed in %lu ms, result=%s\n", t_retry_dur, retry_ok ? "OK" : "FAIL");
+        Serial.flush();
+
+        if (retry_ok) {
+            RAM_LOG("2nd setupLittleFS-ok");
+        } else {
+            RAM_LOG("2nd setupLittleFS-fail");
+        }
+    }
+
+    RAM_LOG("after LittleFS ops");
+
+    // Re-initialize Task WDT to restore normal protection after LittleFS completes
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
     esp_task_wdt_config_t twdt_config = {
-        .timeout_ms = 15000,
+        .timeout_ms = 5000,
         .idle_core_mask = (1 << SOC_CPU_CORES_NUM) - 1, // Subscribe all cores
         .trigger_panic = true,
     };
-    esp_task_wdt_reconfigure(&twdt_config);
-#else
-    esp_task_wdt_init(15, true);
-#endif
-
-    if (!setupLittleFS()) {
-        LittleFS.format();
-        setupLittleFS();
-    }
-
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
-    twdt_config.timeout_ms = 5000;
-    esp_task_wdt_reconfigure(&twdt_config);
+    esp_task_wdt_init(&twdt_config);
 #else
     esp_task_wdt_init(5, true);
 #endif
 
-    RAM_LOG("after LittleFS");
+    RAM_LOG("before setupSdCard");
     bool checkFS = setupSdCard();
+    RAM_LOG("after setupSdCard");
+
     bruceConfig.fromFile(checkFS);
+    RAM_LOG("after bruceConfig");
     bruceConfigPins.fromFile(checkFS);
+    RAM_LOG("after bruceConfigPins");
 }
 
 /*********************************************************************
